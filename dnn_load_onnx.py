@@ -34,13 +34,14 @@ def infer_img(img_dir, net):
     blob = cv2.dnn.blobFromImage(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
     net.setInput(blob)
     outs = net.forward(net.getUnconnectedOutLayersNames())
-    outs = outs[0][0][0]
+    outs = outs[-1][0][0]
+    outs = sigmoid(outs)
     # 后处理
     # outs[outs<0] = 0
     # outs[outs>0] = 255
     # result = outs[0][0]
     outs = cv2.resize(outs, (1024, 576))
-    _, binary = cv2.threshold(outs, 0, 255, cv2.THRESH_BINARY)
+    _, binary = cv2.threshold(outs, 0.5, 255, cv2.THRESH_BINARY)
     binary = np.array(binary, np.uint8)
     # 由于这里的img范围是(0, 1), 但img的mask范围是(0, 255), 所以统一范围避免之后从float32转到uint8时精度损失造成图片颜色不对
     # img_with_mask dtype=np.uint8
@@ -49,15 +50,16 @@ def infer_img(img_dir, net):
 
 
 def load_onnx(is_video):
-    onnx_path = "/mnt1/algorithms/yanghao/seg_models/河道/hedao_seg_model_W0.onnx"
+    # onnx_path = "/mnt1/algorithms/yanghao/seg_models/河道/hedao_seg_model_W0.onnx"
+    onnx_path = "/mnt/shy/sjh/Seg_data/hedao/train/onnx/model_best_loss.onnx"
     try:
         net = cv2.dnn.readNet(onnx_path)
         print('read sucess')
     except:
         print('read failed')
     if not is_video:
-        img_root_path = "/mnt/shy/sjh/YOLOP-main/hedao_img_test"
-        img_save_path = "/mnt/shy/sjh/YOLOP-main/hedao_img_test/result"
+        img_root_path = "/mnt/shy/sjh/Seg_data/hedao/train/image"
+        img_save_path = "/mnt/shy/sjh/Seg_data/hedao/train/pre_mask_hao"
         img_dirs = glob.glob(os.path.join(img_root_path, "*.jpg"))
         for img_dir in img_dirs:
             img_result = infer_img(img_dir, net)
@@ -124,4 +126,4 @@ def addmask2img(img, mask):
 
 
 if __name__ == "__main__":
-    load_onnx(is_video=True)
+    load_onnx(is_video=False)

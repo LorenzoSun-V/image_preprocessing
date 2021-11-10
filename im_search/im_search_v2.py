@@ -1,7 +1,7 @@
 '''
 Author: shy
 Description: 去除重复的图片，构建VP树需要的复杂度为O(n logn)，一次搜索只需要O(logn)的复杂度
-LastEditTime: 2021-11-09 17:41:28
+LastEditTime: 2021-11-10 10:11:33
 '''
 import os, cv2, glob, time, click, shutil, functools
 import numpy as np
@@ -11,21 +11,24 @@ from concurrent.futures import ThreadPoolExecutor
 from vptree import VPTree
 import scipy.fftpack
 
-from im_hash import phash, hamming_distance
+from im_hash  import phash, hamming_distance
+from profiler import Profiler
 
 ###############################
-ROOT_DIR = "/mnt2/private_data/abc_8_remove/img_59/2-money_staff/"
+# ROOT_DIR = "/mnt2/private_data/abc_8_remove/img_59/5-bank_staff_shirt/"
+ROOT_DIR = "/mnt2/private_data/abc_8_remove/img_59/"
 GC_DIR = "/mnt2/private_data/gc_imgs/"   # 回收重复的图片文件夹
 DEL_IMG  = False   # 对重复的图片是否删除
 PARALLEL = False   # 是否并行
 HASH_SIZE = 8 # 图片哈希参数
-MAX_HAM_DISTANCE = 10 # 搜索相似图片的哈希距离
+MAX_HAM_DISTANCE = 6 # 搜索相似图片的哈希距离
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'JPG', 'PNG'])
 ###############################
 
 
 def find_dirs(folder):
-	dirs = [d for d in sorted(os.listdir(folder)) if os.path.isdir(folder/d)]
+	folder = Path(folder)
+	dirs = [str(folder/d) for d in sorted(os.listdir(folder)) if os.path.isdir(folder/d)]
 	return dirs
 
 def find_files(dir_path, exts):
@@ -33,7 +36,6 @@ def find_files(dir_path, exts):
 	for ext in exts:
 		files.extend( glob.glob(dir_path + "/*." + ext) )
 	return files
-
 
 def hash_img(img_path):
 	hash_value = None
@@ -53,8 +55,7 @@ def move_img(img_path):
 	if os.path.isfile(img_path):
 		shutil.move(img_path, GC_DIR)
 
-def build_hash_tree(img_paths, parallel=False):
-
+def build_hash(img_paths, parallel=False):
 	hashes = {}
 	if parallel:
 		with ThreadPoolExecutor() as e:
@@ -72,25 +73,25 @@ def build_hash_tree(img_paths, parallel=False):
 				hash_img_paths.append(img_path)
 				hashes[hash_value] = hash_img_paths
 
+	return hashes
+
+def build_tree(hashes):
 	points = list(hashes.keys())
 	tree = VPTree(points, hamming_distance)
 	print("[INFO] build tree finished ")
-	return tree, hashes
-
+	return tree
 
 def handle_dup_imgs(hashes):
-	remove_imgs_num = 0
 	for hash_value, img_paths in hashes.items():
 		if len(img_paths)>1:
 			for idx,img_path in enumerate(img_paths):
-				if idx==0: continue
+				if idx == 0: continue
 				delete_img(img_path)
-				remove_imgs_num += 1
-	print("remove {} image".format(remove_imgs_num))
 
+def handle_similar_imgs(hashes):
+	with Profiler('build_tree'):
+		tree = build_tree(hashes)
 
-def handle_similar_imgs(tree, hashes):
-	remove_imgs_num = 0
 	points = list(hashes.keys())
 	for point in tqdm(points):
 		results = tree.get_all_in_range(point, MAX_HAM_DISTANCE)
@@ -104,20 +105,31 @@ def handle_similar_imgs(tree, hashes):
 			else:
 				[move_img(i) for i in similar_img_paths]
 
-			remove_imgs_num += len(similar_img_paths)
-	print("remove {} image".format(remove_imgs_num))
 
-def search_imgs(img_dir):
-	img_paths = find_files(img_dir)
-	print(f"[INFO] dir:{img_dir} num: {len(img_paths)}")
-	tree, hashes = build_hash_tree(img_paths, PARALLEL)
+def handle_imgs(img_dir):
+	old_img_paths = find_files(img_dir, ALLOWED_EXTENSIONS)
+	print(f" [INFO] dir:{img_dir} [OLD] num: {len(old_img_paths)} ")
+
+	with Profiler('build_hash'):
+		hashes = build_hash(old_img_paths, PARALLEL)
+
 	# handle_dup_imgs(hashes)
-	handle_similar_imgs(tree, hashes)
+	handle_similar_imgs(hashes)
+
+	new_img_paths = find_files(img_dir, ALLOWED_EXTENSIONS)
+	print(f" [INFO] dir:{img_dir} [NEW] num: {len(new_img_paths)} ")
+	print(f" [INFO] dir:{img_dir} [REMOVE] num: { len(old_img_paths) - len(new_img_paths) } \n")
+
+
 
 if __name__ == '__main__':
 	img_dirs = find_dirs(ROOT_DIR)
 	if len(img_dirs) > 0:
 		with ThreadPoolExecutor() as e:
-			loop = tqdm(e.map(search_imgs, img_dirs), total=len(img_dirs))
+			loop = tqdm(e.map(handle_imgs, img_dirs), total=len(img_dirs))
 	else:
-		search_imgs(ROOT_DIR)
+		handle_imgs(ROOT_DIR)
+
+	print('=================Timing Stats=================')
+	print(f"{'build_hash:':<37}{Profiler.get_avg_millis('build_hash'):>6.3f} ms")
+	print(f"{'build_tree:':<37}{Profiler.get_avg_millis('build_tree'):>6.3f} ms")

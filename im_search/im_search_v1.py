@@ -61,7 +61,8 @@ def remove_similar_images(img_dir):
 	for img_file, hash_value in images_hash.items():
 		for f, h in images_hash.items():
 			if not img_file == f:
-				diff = hamming_distance(hash_value, h)
+				# diff = hamming_distance(hash_value, h)
+				diff = abs(hash_value - h)
 				if diff<=HASH_DISTANCE:
 					similar_images[img_file] = similar_images.get(img_file, []) + [f]
 
