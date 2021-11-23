@@ -22,8 +22,8 @@ def v2i(src, out_src, jpg_quality, skip_frame):
 
 if __name__ == '__main__':
 
-    in_path = "/mnt/shy/农行POC/abc_data/第六批1018/wheelchair"
-    out_path = "/mnt/shy/农行POC/abc_data/第六批1018/wheelchair_img"
+    in_path = "/mnt2/sjh/上海银行data/第一批_拐杖补充"
+    out_path = "/mnt2/sjh/上海银行data/第一批模拟拐杖数据集"
     jpg_quality = 80
     skip_frame = 3
 

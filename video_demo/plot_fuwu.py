@@ -75,7 +75,7 @@ class MOT:
         # self.det_model = SoftFPN('person_hs_face')
         # softfpn_det   = SoftFPN(detect_type='bank_person_hs')
         self.det_model = SoftFPN(detect_type='bank_person_hs')
-        self.cls_model = SoftFPN(detect_type='mob2staff7')
+        self.cls_model = SoftFPN(detect_type='mob2staff8')
 
         if cfg.track_type == "person":
             self.feat_model = SoftFPN('person_feature')
@@ -87,9 +87,12 @@ class MOT:
     # self.tracker  = MultiTracker(cfg)
 
     def step(self, frame, frame_id, frame_count, video_name):
-        tlbrs_roi = np.array([[[343, 25], [1042, 36], [1216, 420], [1033, 542], [366, 576], [206, 459]]], dtype=np.int32)
-        cv2.polylines(frame, tlbrs_roi, True, thickness=3, color=(0, 255, 255))  # 绘制多边形
-        tlbrs_roi = [(343, 25), (1042, 36), (1216, 420), (1033, 542), (366, 576), (206, 459)]
+        tlbrs_roi_jiachao = np.array([[[320, 190], [266, 248], [492, 340], [508, 288]]], dtype=np.int32)
+        tlbrs_roi_jiachaojian = np.array([[[320, 190], [112, 411], [120, 452], [461, 426], [508, 288]]], dtype=np.int32)
+        cv2.polylines(frame, tlbrs_roi_jiachao, True, thickness=3, color=(0, 255, 255))  # 绘制多边形
+        cv2.polylines(frame, tlbrs_roi_jiachaojian, True, thickness=2, color=(255, 255, 0))  # 绘制多边形
+        tlbrs_roi_jiachao = [(338, 50), (283, 82), (277, 234), (491, 343), (544, 141)]
+        tlbrs_roi_jiachaojian = [(269, 49), (1, 221), (120, 425), (461, 426), (544, 136)]
         with Profiler('detect'):
             det_data = self.det_model(frame)
         det_dict = convert_det_dict(det_data)
@@ -123,44 +126,48 @@ class MOT:
                     cv2.imwrite(str(save_img_path), ims[i])
 
             # 绘制检测框信息
+            jiachao_person = 0
+            jiachaojian_person = 0
             for i, (tlbr, label, score) in enumerate(zip(tlbrs, labels, scores)):
-                if frame_id <= 135:
-                    if label == "bank_staff_vest":
-                        label = "person"
-                text = label + " " + score[:4]
+                # if frame_id <= 135:
+                #     if label == "bank_staff_vest":
+                #         label = "person"
+                # text = label + " " + score[:4]
                 # text = label+ " " + str(round(score,2))
-                plot_one_box(frame, tlbr, text, color=color_dict3[label])
                 xmin, ymin, xmax, ymax = tlbr
                 center_person = int(xmin + (xmax - xmin) / 2), int(ymin + (ymax - ymin) / 2)
-                print(if_inPoly(tlbrs_roi, center_person))
-                if if_inPoly(tlbrs_roi, center_person):
-                    if label.startswith("bank"):
-                        have_bs = True
-                    elif label == "person":
-                        have_person = True
+                if frame_id <= 55:
+                    plot_one_box(frame, tlbr, False, color=(255, 0, 0))
+                elif frame_id > 55 and frame_id <=213:
+                    if if_inPoly(tlbrs_roi_jiachao, center_person):
+                        frame = draw_zh_cn(frame, "触发告警:单人操作加钞", color=(255, 0, 0),
+                                           position=(xmin, ymin - 14), font_size=10)
+                        plot_one_box(frame, tlbr, False, color=(0, 0, 255))
+                    else:
+                        plot_one_box(frame, tlbr, False, color=(255, 0, 0))
+                else:
+                    plot_one_box(frame, tlbr, False, color=(255, 0, 0))
 
-        if have_bs and have_person:
-            plot_text = "开放中"
-        elif (have_bs == True) and (have_person == False):
-            plot_text = "空闲中"
-        elif have_bs == False:
-            plot_text = "未开放"
-        print(plot_text)
-        # frame = draw_zh_cn(frame, f"当前状态:{plot_text}", color=(255, 0, 0), position=(343, 25),
-        #                    font_size=30)
-        if frame_id <= 135:
-            if have_person:
-                frame = draw_zh_cn(frame, f"2021-10-20 17:49:31 服务开始", color=(255,0,0), position=(11,85), font_size=30)
-        elif frame_id <= 662:
-            frame = draw_zh_cn(frame, f"2021-10-20 17:49:31 服务开始", color=(255, 0, 0), position=(11, 85), font_size=30)
-            # frame = draw_zh_cn(frame, f"2021-10-20 17:49:53 服务结束", color=(255,0,0), position=(11,115), font_size=30)
-            # frame = draw_zh_cn(frame, f"服务总时长: 21秒", color=(255, 0, 0), position=(11, 145), font_size=30)
-        else:
-            frame = draw_zh_cn(frame, f"2021-10-20 17:49:31 服务开始", color=(255, 0, 0), position=(11, 85), font_size=30)
-            frame = draw_zh_cn(frame, f"2021-10-20 17:49:53 服务结束", color=(255, 0, 0), position=(11, 115), font_size=30)
-            frame = draw_zh_cn(frame, f"服务总时长: 22秒", color=(255, 0, 0), position=(11, 145), font_size=30)
+        if frame_id > 55:
+            frame = draw_zh_cn(frame, "2021-10-18 13:35:55 触发告警:单人操作加钞", color=(255, 0, 0), position=(11, 15), font_size=15)
+
+        # if jiachao_person == 1:
+        #     frame = draw_zh_cn(frame, f"单人加钞", color=(255, 0, 0), position=(11, 85), font_size=20)
+        # elif jiachaojian_person == 1:
+        #     frame = draw_zh_cn(frame, f"单人在加钞间", color=(255, 0, 0), position=(11, 115), font_size=20)
+
+        # if frame_id <= 135:
+        #     if have_person:
+        #         frame = draw_zh_cn(frame, f"2021-10-20 17:49:31 服务开始", color=(255,0,0), position=(11,85), font_size=30)
+        # elif frame_id <= 662:
+        #     frame = draw_zh_cn(frame, f"2021-10-20 17:49:31 服务开始", color=(255, 0, 0), position=(11, 85), font_size=30)
+        #     # frame = draw_zh_cn(frame, f"2021-10-20 17:49:53 服务结束", color=(255,0,0), position=(11,115), font_size=30)
+        #     # frame = draw_zh_cn(frame, f"服务总时长: 21秒", color=(255, 0, 0), position=(11, 145), font_size=30)
         # else:
-        #     print("Frame {} no detections".format(frame_id))
+        #     frame = draw_zh_cn(frame, f"2021-10-20 17:49:31 服务开始", color=(255, 0, 0), position=(11, 85), font_size=30)
+        #     frame = draw_zh_cn(frame, f"2021-10-20 17:49:53 服务结束", color=(255, 0, 0), position=(11, 115), font_size=30)
+        #     frame = draw_zh_cn(frame, f"服务总时长: 22秒", color=(255, 0, 0), position=(11, 145), font_size=30)
+
 
         return frame
 
@@ -193,15 +200,17 @@ def demo(cfg, video_path):
         if frame is None: break
 
         log.info(f'\n=================New Frame {frame_count}=================\n')
-        frame = cv2.resize(frame, (width, height))
-        frame = mot.step(frame, frame_id, frame_count, video_name)
 
+        frame = mot.step(frame, frame_id, frame_count, video_name)
+        frame = cv2.resize(frame, (width, height))
         mot.print_timing_info()
 
         frame_count += 1
         frame_id += 1
         if cfg.save_video:
             output.write(frame)
+            save_path = f"/mnt/shy/农行POC/算法技术方案/demo_1021/加钞间/demo/image2/{frame_count}.jpg"
+            cv2.imwrite(save_path, frame)
 
         if cfg.show_predict_video:
             cv2.imshow('test', frame)
@@ -220,7 +229,7 @@ def demo(cfg, video_path):
 def traversal_videos(cfg):
     creat_log_dir(cfg)
     # videos in folder
-    video_list = ["/mnt/shy/农行POC/算法技术方案/demo_1021/窗口工作状态/服务时长.mp4"]  # sorted(glob.glob(os.path.join(cfg.video_path, "*.mp4")))
+    video_list = sorted(glob.glob(os.path.join(cfg.video_path, "*.mp4")))
     for i, video_path in enumerate(video_list):
         print(f"{i} / {len(video_list) - 1}")
         print(f"====> {video_path}")
@@ -250,7 +259,7 @@ def parse_args():
         "--video_path",
         # default="/mnt/shy/track/test_yze/cut/guimian_05.mp4"
         # default="/mnt/shy/农行POC/abc_data/第五批0926/cut_video/C26_2_0923_1000_1020_000000--000200.mp4"
-        default="/mnt/shy/农行POC/abc_data/第六批1020/Badcase"
+        default="/mnt/shy/农行POC/算法技术方案/demo_1021/加钞间/video"
 
         # default="/mnt/shy/track/test_yze/guimian.mp4"
     )
@@ -267,7 +276,7 @@ def parse_args():
     parser.add_argument(
         "--log_dir",
         # default="/mnt/shy/track/test_yze/logs/"
-        default="/mnt/shy/农行POC/算法技术方案/demo_1021/窗口工作状态/draw/"
+        default="/mnt/shy/农行POC/算法技术方案/demo_1021/加钞间/demo/"
     )
 
     return parser.parse_args()

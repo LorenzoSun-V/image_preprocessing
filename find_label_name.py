@@ -78,46 +78,50 @@ def inspect_img(img_paths, xml_paths, label_list, color_list):
         for obj in rt.findall( "object" ):
             name = obj.find( "name" ).text
 
-            if name in label_list:
-                bbox = obj.find( "bndbox" )
-                xmin = int(float(bbox.find( "xmin" ).text))
-                ymin = int(float(bbox.find( "ymin" ).text))
-                xmax = int(float(bbox.find( "xmax" ).text))
-                ymax = int(float(bbox.find( "ymax" ).text))
-                color = color_list[ label_list.index( name ) ]
-                cv2.rectangle( img, (xmin, ymin), (xmax, ymax), color, 2 )
-                lms = obj.find( "lm" )
-                if lms is not None:
-                    x1 = int(float(lms.find( "x1" ).text))
-                    y1 = int(float(lms.find( "y1" ).text))
-                    x2 = int(float(lms.find( "x2" ).text))
-                    y2 = int(float(lms.find( "y2" ).text))
-                    x3 = int(float(lms.find( "x3" ).text))
-                    y3 = int(float(lms.find( "y3" ).text))
-                    x4 = int(float(lms.find( "x4" ).text))
-                    y4 = int(float(lms.find( "y4" ).text))
-                    x5 = int(float(lms.find( "x5" ).text))
-                    y5 = int(float(lms.find( "y5" ).text))
-                    points_list = [(x1, y1), (x2, y2), (x3, y3), (x4, y4), (x5, y5),]
-                    for point in points_list:
-                        cv2.circle(img, point, 1, color, 2)
+            if name not in label_list:
+                os.remove(xml_path)
+                os.remove(img_path)
 
-        cv2.namedWindow( 'det_result', cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('det_result', 1080, 720)
-        # cv2.resizeWindow('det_result', 640, 480)
-        cv2.imshow("det_result", img)
-        print( xml_path )
+            # if name in label_list:
+                # bbox = obj.find( "bndbox" )
+                # xmin = int(float(bbox.find( "xmin" ).text))
+                # ymin = int(float(bbox.find( "ymin" ).text))
+                # xmax = int(float(bbox.find( "xmax" ).text))
+                # ymax = int(float(bbox.find( "ymax" ).text))
+                # color = color_list[ label_list.index( name ) ]
+                # cv2.rectangle( img, (xmin, ymin), (xmax, ymax), color, 2 )
+                # lms = obj.find( "lm" )
+                # if lms is not None:
+                #     x1 = int(float(lms.find( "x1" ).text))
+                #     y1 = int(float(lms.find( "y1" ).text))
+                #     x2 = int(float(lms.find( "x2" ).text))
+                #     y2 = int(float(lms.find( "y2" ).text))
+                #     x3 = int(float(lms.find( "x3" ).text))
+                #     y3 = int(float(lms.find( "y3" ).text))
+                #     x4 = int(float(lms.find( "x4" ).text))
+                #     y4 = int(float(lms.find( "y4" ).text))
+                #     x5 = int(float(lms.find( "x5" ).text))
+                #     y5 = int(float(lms.find( "y5" ).text))
+                #     points_list = [(x1, y1), (x2, y2), (x3, y3), (x4, y4), (x5, y5),]
+                #     for point in points_list:
+                #         cv2.circle(img, point, 1, color, 2)
 
-        ch = cv2.waitKey(0) # 按enter键切换下一张图片
-        # 按 ese或q键退出显示
-
-        if ch == "d":
-            cv2.destroyAllWindows()  # release windows
-            os.remove(xml_path)
-            os.remove(img_path)
-            print("delete {img_path}")
-        elif ch == 27 or ch == ord('q') or ch == ord('Q'):
-            break
+        # cv2.namedWindow( 'det_result', cv2.WINDOW_NORMAL)
+        # cv2.resizeWindow('det_result', 1080, 720)
+        # # cv2.resizeWindow('det_result', 640, 480)
+        # cv2.imshow("det_result", img)
+        # print( xml_path )
+        #
+        # ch = cv2.waitKey(0) # 按enter键切换下一张图片
+        # # 按 ese或q键退出显示
+        #
+        # if ch == "d":
+        #     cv2.destroyAllWindows()  # release windows
+        #     os.remove(xml_path)
+        #     os.remove(img_path)
+        #     print("delete {img_path}")
+        # elif ch == 27 or ch == ord('q') or ch == ord('Q'):
+        #     break
 
 def find_labels(img_paths, xml_paths, label_list, new_dir):
 
@@ -270,7 +274,8 @@ if __name__ == "__main__":
     # label_list = [ "person", "head_shoulder", "face", "hand", ]
     # label_list = [ "airplane", ]
     # label_list = [ "face", ]
-    label_list = ["person", "other"]
+    # label_list = ["person", "other"]
+    label_list = ["crutch"]
     color_list = [ (255,0,0), (0,255,0), (0,0,255), (255,255,0), (0,255,255),] #cv2 bgr
 
     # 获取 针对二级文件夹的图片路径

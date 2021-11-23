@@ -5,7 +5,7 @@ import numpy as np
     鼠标点击，获取当前坐标值
 """
 
-img = cv2.imread("/mnt/shy/农行POC/算法技术方案/demo_1021/窗口工作状态/1.jpg")
+img = cv2.imread("/mnt/shy/农行POC/算法技术方案/demo_1021/加钞间/加钞间.jpg")
 
 
 def on_EVENT_LBUTTONDOWN(event, x, y, flags, param):

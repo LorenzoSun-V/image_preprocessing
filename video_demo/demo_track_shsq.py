@@ -170,40 +170,56 @@ def demo(cfg, video_path):
     fvs.stop()
 
 
-def traversal_videos(cfg):
-    creat_log_dir(cfg)
-    # videos in folder
-    video_list = sorted(glob.glob(os.path.join(cfg.video_path, "*.mp4")))
-    video_list = ["/mnt/shy/上海智慧社区探索项目/raw_data_20211027/falldown/cut_1028/ch20_20211026150000_000841--000856.mp4"]
-    for i, video_path in enumerate(video_list):
-        print(f"{i} / {len(video_list) - 1}")
-        print(f"====> {video_path}")
-        demo(cfg, video_path)
+def infer_img(cfg, img_path, frame_id):
+    img_name = os.path.basename(img_path)
+    frame = cv2.imread(img_path)
+    mot = MOT(cfg)
+    frame = mot.step(frame, frame_id, img_name)
+    save_path = os.path.join(cfg.log_dir, img_name)
+    cv2.imwrite(save_path, frame)
 
-    # folders in folder
-    # folders = sorted(os.listdir(cfg.video_path))
-    # video_list = []
-    # for folder in folders:
-    # 	current_folder = os.path.join(cfg.video_path, folder)
-    # 	video_list += glob.glob(os.path.join(current_folder, "*.mp4"))
-    # for i, video_path in enumerate(video_list):
-    # 	print(f"{i} / {len(video_list) - 1}")
-    # 	print(f"====> {video_path}")
-    # 	demo(cfg, video_path)
+
+def traversal_videos(cfg):
+    if cfg.is_video:
+        creat_log_dir(cfg)
+        # videos in folder
+        video_list = sorted(glob.glob(os.path.join(cfg.video_path, "*.mp4")))
+        # video_list = ["/mnt/shy/上海智慧社区探索项目/raw_data_20211027/falldown/cut_1028/ch20_20211026150000_000841--000856.mp4"]
+        for i, video_path in enumerate(video_list):
+            print(f"{i} / {len(video_list) - 1}")
+            print(f"====> {video_path}")
+            demo(cfg, video_path)
+        # folders in folder
+        # folders = sorted(os.listdir(cfg.video_path))
+        # video_list = []
+        # for folder in folders:
+        # 	current_folder = os.path.join(cfg.video_path, folder)
+        # 	video_list += glob.glob(os.path.join(current_folder, "*.mp4"))
+        # for i, video_path in enumerate(video_list):
+        # 	print(f"{i} / {len(video_list) - 1}")
+        # 	print(f"====> {video_path}")
+        # 	demo(cfg, video_path)
+    else:
+        img_list = sorted(glob.glob(os.path.join(cfg.video_path, "*.jpg")))
+        for i, img_path in enumerate(img_list):
+            print(f"{i} / {len(img_list) - 1}")
+            print(f"====> {img_path}")
+            infer_img(cfg, img_path, i)
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="MOT")
     # parser.add_argument(
     # 	"--yml", default="./configs/track.yml")
-    parser.add_argument("--save_video", default=True)
+    parser.add_argument("--is_video", default=False)
+    parser.add_argument("--save_video", default=False)
     parser.add_argument("--save_img", default=False)
     parser.add_argument("--show_predict_video", default=False)
     parser.add_argument(
         "--video_path",
         # default="/mnt/shy/track/test_yze/cut/guimian_05.mp4"
         # default="/mnt/shy/农行POC/abc_data/第五批0926/cut_video/C26_2_0923_1000_1020_000000--000200.mp4"
-        default="/mnt/shy/上海智慧社区探索项目/raw_data_20211022/use"
+        default="/mnt/shy/上海智慧社区探索项目/1116_badcase/电瓶车误报"
 
         # default="/mnt/shy/track/test_yze/guimian.mp4"
     )
@@ -220,7 +236,7 @@ def parse_args():
     parser.add_argument(
         "--log_dir",
         # default="/mnt/shy/track/test_yze/logs/"
-        default="/mnt/shy/sjh/上海智慧社区data/demo/"
+        default="/mnt/shy/上海智慧社区探索项目/1116_badcase/电瓶车误报结果/"
     )
 
     return parser.parse_args()

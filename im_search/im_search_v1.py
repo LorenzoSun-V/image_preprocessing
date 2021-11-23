@@ -83,7 +83,7 @@ if __name__ == '__main__':
 	HASH_DISTANCE = 6   # 哈希距离参数，用于找到距离为6以内的相似图片
 
 	# dir_path = "/mnt2/private_data/abc_8_remove_2/img_59/"
-	dir_path = "/mnt2/private_data/abc_8_remove_2/img_50/"
+	dir_path = "/mnt2/sjh/上海银行data/第一批模拟视频badcase小图/2021-1115-1403-30/img/"
 	for idx, target in tqdm(enumerate(os.listdir(dir_path)), total=len(os.listdir(dir_path))):
 		d = os.path.join(dir_path, target)
 		if os.path.isdir(d):

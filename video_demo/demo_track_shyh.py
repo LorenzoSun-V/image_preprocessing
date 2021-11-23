@@ -84,13 +84,15 @@ class MOT:
             # 		cv2.imwrite(str(save_img_path), img)
 
             with Profiler('mob2staff'):
-                # cls_result = [self.cls_model(im)['class']    for im in ims]
-                # labels = [ i['label'] for i in cls_result]
-                # scores = [ i['score'] for i in cls_result]
-
-                label_dict = self.cls_model(ims)
-                labels = label_dict["class"]["label"]
-                scores = label_dict["class"]["score"]
+                labels = []
+                scores = []
+                for i in range(0, len(ims), 16):
+                    if (len(ims) - i) < 16:
+                        label_dict = self.cls_model(ims[i:])
+                    else:
+                        label_dict = self.cls_model(ims[i:i+16])
+                    labels += label_dict["class"]["label"]
+                    scores += label_dict["class"]["score"]
 
             # 存小图
             if self.cfg.save_img:
@@ -198,7 +200,7 @@ def parse_args():
         "--video_path",
         # default="/mnt/shy/track/test_yze/cut/guimian_05.mp4"
         # default="/mnt/shy/农行POC/abc_data/第五批0926/cut_video/C26_2_0923_1000_1020_000000--000200.mp4"
-        default="/mnt/shy/上海银行/测试拍摄视频"
+        default="/mnt2/private_data/上海银行/第一批1118/效果对比/CUT"
 
         # default="/mnt/shy/track/test_yze/guimian.mp4"
     )
@@ -215,7 +217,7 @@ def parse_args():
     parser.add_argument(
         "--log_dir",
         # default="/mnt/shy/track/test_yze/logs/"
-        default="/mnt/shy/sjh/上海银行data/第一批模拟视频/"
+        default="/mnt2/private_data/上海银行/第一批1118/效果对比/shanghai_bank/"
     )
 
     return parser.parse_args()

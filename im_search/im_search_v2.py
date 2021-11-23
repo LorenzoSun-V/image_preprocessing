@@ -3,7 +3,7 @@ Author: shy
 Description: 去除重复的图片，构建VP树需要的复杂度为O(n logn)，一次搜索只需要O(logn)的复杂度
 LastEditTime: 2021-11-10 10:11:33
 '''
-import os, cv2, glob, time, click, shutil, functools
+import os, cv2, glob, time, shutil, functools
 import numpy as np
 from pathlib import Path
 from tqdm import tqdm
@@ -16,9 +16,9 @@ from profiler import Profiler
 
 ###############################
 # ROOT_DIR = "/mnt2/private_data/abc_8_remove/img_59/5-bank_staff_shirt/"
-ROOT_DIR = "/mnt2/private_data/abc_8_remove/img_59/"
-GC_DIR = "/mnt2/private_data/gc_imgs/"   # 回收重复的图片文件夹
-DEL_IMG  = False   # 对重复的图片是否删除
+ROOT_DIR = "/mnt2/sjh/上海银行data/第一批模拟视频badcase小图/2021-1115-1403-30/img/"
+GC_DIR = "/mnt2/sjh/上海银行data/第一批模拟视频badcase小图/2021-1115-1403-30/gc/"   # 回收重复的图片文件夹
+DEL_IMG  = True   # 对重复的图片是否删除
 PARALLEL = False   # 是否并行
 HASH_SIZE = 8 # 图片哈希参数
 MAX_HAM_DISTANCE = 6 # 搜索相似图片的哈希距离
@@ -119,7 +119,6 @@ def handle_imgs(img_dir):
 	new_img_paths = find_files(img_dir, ALLOWED_EXTENSIONS)
 	print(f" [INFO] dir:{img_dir} [NEW] num: {len(new_img_paths)} ")
 	print(f" [INFO] dir:{img_dir} [REMOVE] num: { len(old_img_paths) - len(new_img_paths) } \n")
-
 
 
 if __name__ == '__main__':
