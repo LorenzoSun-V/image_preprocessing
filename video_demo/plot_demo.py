@@ -20,7 +20,7 @@ from pathlib import Path, PosixPath
 from request_api import SoftFPN
 from video import FileVideoStream
 from profiler import Profiler
-from utils import checkfolder, convert_det_dict, crop_im, plot_one_box
+from utils import checkfolder, convert_det_dict, crop_im, plot_one_box, if_inPoly
 from shapely import geometry
 from PIL import Image,ImageDraw, ImageFont
 
@@ -34,13 +34,6 @@ def draw_zh_cn(frame, string, color, position, font_size=20):
     draw.text(position, string, color, font=size_font)
     img = cv2.cvtColor(np.array(pil_im), cv2.COLOR_RGB2BGR)
     return img
-
-
-def if_inPoly(polygon, Points):
-    line = geometry.LineString(polygon)
-    point = geometry.Point(Points)
-    polygon = geometry.Polygon(line)
-    return polygon.contains(point)
 
 
 label_list = ["person", "head_shoulder", "face"]

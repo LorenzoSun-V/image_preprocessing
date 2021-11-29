@@ -1,11 +1,8 @@
-'''
-Author: shy
-Description: 
-LastEditTime: 2021-09-27 10:59:50
-'''
-import os,cv2
+import os
+import cv2
 from pathlib import Path, PosixPath
 import numpy as np
+from shapely import geometry
 
 
 def checkfolder(paths):
@@ -55,3 +52,10 @@ def decode_ratio(tlbrs, height, width):
   tlbrs[:, 2] *=  width
   tlbrs[:, 3] *=  height
   return tlbrs.astype("int")
+
+
+def if_inPoly(polygon, Points):
+    line = geometry.LineString(polygon)
+    point = geometry.Point(Points)
+    polygon = geometry.Polygon(line)
+    return polygon.contains(point)

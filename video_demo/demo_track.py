@@ -128,7 +128,7 @@ def demo(cfg, video_path):
 	width, height = 1280, 720
 	if cfg.save_video:
 		fourcc = cv2.VideoWriter_fourcc(*'MJPG')  ## MJPG MP4V
-		output = cv2.VideoWriter(outputFile, fourcc, 5, (width, height), )
+		output = cv2.VideoWriter(outputFile, fourcc, 5, (width, height))
 	fvs = FileVideoStream(video_path).start()
 	mot = MOT(cfg)
 
@@ -153,6 +153,7 @@ def demo(cfg, video_path):
 
 			if cfg.save_video:
 				for frame in frames:
+					frame = cv2.resize(frame, (width, height))
 					output.write(frame)
 			if cfg.show_predict_video:
 				for frame in frames:
@@ -197,13 +198,13 @@ def parse_args():
 	# parser.add_argument(
 	# 	"--yml", default="./configs/track.yml")
 	parser.add_argument("--save_video", default=True)
-	parser.add_argument("--save_img", default=True)
+	parser.add_argument("--save_img", default=False)
 	parser.add_argument("--show_predict_video", default=False)
 	parser.add_argument(
 		"--video_path",
 		# default="/mnt/shy/track/test_yze/cut/guimian_05.mp4"
 		# default="/mnt/shy/农行POC/abc_data/第五批0926/cut_video/C26_2_0923_1000_1020_000000--000200.mp4"
-		default="/mnt2/private_data/上海银行/第一批1118/已跑完/"
+		default="/mnt/shy/sjh/"
 
 		# default="/mnt/shy/track/test_yze/guimian.mp4"
 	)
@@ -220,7 +221,7 @@ def parse_args():
 	parser.add_argument(
 		"--log_dir",
 		# default="/mnt/shy/track/test_yze/logs/"
-		default="/mnt2/sjh/上海银行data/test_folder/"
+		default="/mnt/shy/sjh/对比视频/"
 	)
 
 	return parser.parse_args()

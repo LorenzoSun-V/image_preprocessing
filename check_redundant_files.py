@@ -73,16 +73,23 @@ def find_redundant_files(xml_files, img_files):
 
 # 检查图片标注情况
 def inspect_img(img_paths, xml_paths, label_list, color_list):
-
+	# xml_paths = ["/mnt1/0_各项目标定结果/目标检测/轮椅_拐杖/农业银行/第一批_拐杖补充结果/Annotations/vlc-record-2021-11-03-14h50m26s-rtsp___192.167.10.126-_002959--003114_0295.xml"]
+	# img_paths = ["/mnt1/0_各项目标定结果/目标检测/轮椅_拐杖/农业银行/第一批_拐杖补充结果/JPEGImages/vlc-record-2021-11-03-14h50m26s-rtsp___192.167.10.126-_002959--003114_0295.jpg"]
 	for img_path, xml_path in zip(img_paths, xml_paths):
 
 		img = cv2.imread( img_path )
 		tree = load_voc_xml( xml_path )
 		rt = tree.getroot()
-		
+
+		if not rt.findall( "object" ):
+			print(xml_path)
+			os.remove(img_path)
+			os.remove(xml_path)
+			continue
+
 		for obj in rt.findall( "object" ):
 			name = obj.find( "name" ).text
-			
+
 			if name in label_list:
 				bbox = obj.find( "bndbox" )
 				xmin = int(float(bbox.find( "xmin" ).text))
@@ -113,10 +120,10 @@ def inspect_img(img_paths, xml_paths, label_list, color_list):
 		# cv2.namedWindow( 'det_result', cv2.WINDOW_NORMAL)
 		# cv2.resizeWindow('det_result', 640, 480)
 		# cv2.imshow("det_result", img)
-		img_name = os.path.basename(img_path)
-		save_path = os.path.join("/mnt/shy/sjh/Xray", img_name)
-		cv2.imwrite(save_path, img)
-		print( xml_path )
+		# img_name = os.path.basename(img_path)
+		# save_path = os.path.join("/mnt1/0_各项目标定结果/目标检测/轮椅_拐杖/农业银行/vis", img_name)
+		# cv2.imwrite(save_path, img)
+		# print( xml_path )
 	
 		ch = cv2.waitKey(0) # 按enter键切换下一张图片
 		# 按 ese或q键退出显示
@@ -162,12 +169,12 @@ def check_img(img_paths):
 if __name__ == "__main__":
 	# root = "/mnt1/0_各项目标定结果/目标检测/公司职员/农业银行/农业银行第三批_轮椅拐杖/"
 	# root = "/mnt1/0_各项目标定结果/目标检测/公司职员/农业银行/农业银行第三批_拐杖轮椅7.23/"
-	root = "/mnt2/shy2/x_ray/初赛第一阶段_训练集/domain1/"
+	root = "/mnt1/0_各项目标定结果/目标检测/轮椅_拐杖/农业银行/第一批_拐杖补充结果/"
 	# label_list = [ "wheelchair" ]
-	# label_list = [ "crutch_Y", "crutch_1", "wheelchair"]
-	label_list = ["knife", "scissors", "sharpTools", "expandableBaton", "smallGlassBottle", "electricBaton",
-				  "plasticBeverageBottle", "plasticBottleWithaNozzle", "electronicEquipment", "battery",
-				  "seal", "umbrella"]
+	label_list = [ "crutch", "wheelchair"]
+	# label_list = ["knife", "scissors", "sharpTools", "expandableBaton", "smallGlassBottle", "electricBaton",
+	# 			  "plasticBeverageBottle", "plasticBottleWithaNozzle", "electronicEquipment", "battery",
+	# 			  "seal", "umbrella"]
 	# xml_dir = Path( root + "Annotations/" )
 	# img_dir = Path( root + "JPEGImages/" )
 	xml_dir = Path( root + "Annotations/" )

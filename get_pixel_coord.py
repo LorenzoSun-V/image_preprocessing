@@ -5,12 +5,12 @@ import numpy as np
     鼠标点击，获取当前坐标值
 """
 
-img = cv2.imread("/mnt/shy/农行POC/算法技术方案/demo_1021/加钞间/加钞间.jpg")
+img = cv2.imread("/mnt2/private_data/上海银行/第一批1118/需测试/一帧/C28_1118_1141_1402_000000--001500_0001.jpg")
 
 
 def on_EVENT_LBUTTONDOWN(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
-        xy = "%d,%d" % (x, y)
+        xy = "%d, %d" % (x, y)
         print(xy)
         cv2.circle(img, (x, y), 1, (255, 0, 0), thickness=-1)
         cv2.putText(img, xy, (x, y), cv2.FONT_HERSHEY_PLAIN,
