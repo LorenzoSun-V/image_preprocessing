@@ -127,7 +127,7 @@ def demo(cfg, video_path):
 	outputFile = str(cfg.log_dir / f"demo_{video_name}")
 	width, height = 1280, 720
 	if cfg.save_video:
-		fourcc = cv2.VideoWriter_fourcc(*'MJPG')  ## MJPG MP4V
+		fourcc = cv2.VideoWriter_fourcc(*'mp4v')  ## MJPG MP4V
 		output = cv2.VideoWriter(outputFile, fourcc, 5, (width, height))
 	fvs = FileVideoStream(video_path).start()
 	mot = MOT(cfg)
@@ -173,11 +173,11 @@ def demo(cfg, video_path):
 def traversal_videos(cfg):
 	creat_log_dir(cfg)
 	# videos in folder
-	video_list = sorted(glob.glob(os.path.join(cfg.video_path, "*.mp4")))  # [0:5] [5:10] [10:15] [15:21] [21:]
-
+	video_list = sorted(glob.glob(os.path.join(cfg.video_path, "*.mp4")))[6:]
+	video_list = ["/mnt/shy/农行POC/abc_data/第九批1119/cut/C57_3_1101_ 0920_ 0940_001523--001537.mp4"]
 	for i, video_path in enumerate(video_list):
-		print(f"{i} / {len(video_list) - 1}")
-		print(f"====> {video_path}")
+		log.info(f"{i} / {len(video_list) - 1}")
+		log.info(f"====> {video_path}")
 		demo(cfg, video_path)
 
 
@@ -204,7 +204,7 @@ def parse_args():
 		"--video_path",
 		# default="/mnt/shy/track/test_yze/cut/guimian_05.mp4"
 		# default="/mnt/shy/农行POC/abc_data/第五批0926/cut_video/C26_2_0923_1000_1020_000000--000200.mp4"
-		default="/mnt/shy/sjh/"
+		default="/mnt/shy/农行POC/abc_data/第九批1119/cut/"
 
 		# default="/mnt/shy/track/test_yze/guimian.mp4"
 	)
@@ -221,7 +221,7 @@ def parse_args():
 	parser.add_argument(
 		"--log_dir",
 		# default="/mnt/shy/track/test_yze/logs/"
-		default="/mnt/shy/sjh/对比视频/"
+		default="/mnt2/sjh/农行data/第九批1119/"
 	)
 
 	return parser.parse_args()

@@ -137,7 +137,7 @@ def example2(root_path, video_dirs, temp_time):
     :return:
     """
 
-    save_file = "/mnt/shy/农行POC/算法技术方案/demo_1021/窗口工作状态"
+    save_file = "/mnt1/shy1/上海银行模型验证/第一批badcase/video"
     if not os.path.exists(save_file):
         os.makedirs(save_file)
     for i, video_dir in enumerate(video_dirs):
@@ -187,7 +187,7 @@ def example2(root_path, video_dirs, temp_time):
 
 
 if __name__ == "__main__":
-    root_path = '/mnt/shy/农行POC/abc_data/第六批1020/cut/C26'
+    root_path = '/mnt2/private_data/上海银行/第一批1118/1124'
 
     # video_dirs = []
     # folder_names = os.listdir(root_path)

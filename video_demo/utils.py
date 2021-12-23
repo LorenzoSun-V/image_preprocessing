@@ -2,6 +2,7 @@ import os
 import cv2
 from pathlib import Path, PosixPath
 import numpy as np
+import glob
 from shapely import geometry
 
 
@@ -16,6 +17,7 @@ def checkfolder(paths):
 			Path.mkdir(paths)
 			print("Created new directory in %s" % paths)
 
+
 def convert_det_dict(det_data):
 	det_dict = {}
 	for data in det_data:
@@ -24,6 +26,7 @@ def convert_det_dict(det_data):
 		det_dict[class_name]["tlbrs"] = tlbrs
 		det_dict[class_name]["scores"] = scores
 	return det_dict
+
 
 def plot_one_box(img, tlbr, info=False, color=(0, 255, 0), line_thickness=2):
 	tl = line_thickness or round(0.002 * max(img.shape[0:2])) + 1  # line thickness
@@ -37,12 +40,14 @@ def plot_one_box(img, tlbr, info=False, color=(0, 255, 0), line_thickness=2):
 		cv2.rectangle(img, c1, c2, color, -1)  # filled
 		cv2.putText(img, info, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
+
 def crop_im(frame, tlbr):
 	tlbr = [max(x, 0) for x in tlbr]
 	# print("tlbr:", tlbr)
 	x0, y0, x1, y1 = tlbr
 	roi = frame[y0:y1, x0:x1]
 	return roi
+
 
 def decode_ratio(tlbrs, height, width):
   tlbrs = np.array(tlbrs)
@@ -59,3 +64,20 @@ def if_inPoly(polygon, Points):
     point = geometry.Point(Points)
     polygon = geometry.Polygon(line)
     return polygon.contains(point)
+
+
+def get_all_files(root_path):
+	video_list = []
+	img_list = []
+	video_extentions = ['.mp4', '.MP4']
+	img_extentions = ['.jpg', '.png', '.jpeg', '.JPG', '.PNG', '.JPEG']
+	for ext in img_extentions:
+		img_list += glob.glob(str(Path(root_path) / f"*{ext}"))
+		img_list += glob.glob(str(Path(root_path) / f"*/*{ext}"))
+		img_list += glob.glob(str(Path(root_path) / f"*/*/*{ext}"))
+	for ext in video_extentions:
+		video_list += glob.glob(str(Path(root_path) / f"*{ext}"))
+		video_list += glob.glob(str(Path(root_path) / f"*/*{ext}"))
+		video_list += glob.glob(str(Path(root_path) / f"*/*/*{ext}"))
+
+	return video_list, img_list

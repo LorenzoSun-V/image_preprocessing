@@ -32,7 +32,7 @@ def create_txt_withoutFolder(video_path):
 
 
 if __name__ == "__main__":
-    video_path = "/mnt/shy/农行POC/abc_data/第六批1018/full"
+    video_path = "/mnt2/private_data/上海银行/第一批1118/1124"
     create_txt_withoutFolder(video_path)
     # create_txt_withFolder()
 

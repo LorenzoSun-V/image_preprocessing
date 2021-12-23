@@ -24,7 +24,7 @@ color_dict3 = {k: v for k, v in zip(label_list3, color_list3)}
 roi_dict = {"C28": [(246, 176), (337, 713), (1167, 714), (1218, 383), (794, 99)],
 			"C31": [(35, 284), (128, 720), (1260, 720), (1261, 529), (1085, 424), (1112, 345), (543, 161)],
 			"C32": [(345, 244), (319, 499), (149, 505), (117, 720), (1159, 720), (805, 387), (888, 367), (670, 232)],
-			"C38": [(412, 226), (8, 407), (268, 720), (873, 720), (1187, 177), (922, 115), (562, 271)],
+			"C38": [(412, 226), (8, 407), (0, 720), (1200, 720), (1200, 177), (922, 115), (562, 271)],
 			"C39": [(583, 317), (742, 720), (974, 720), (1154, 648), (1193, 553), (1029, 411), (748, 425), (689, 319)],
 			"C49": [(719, 147), (468, 126), (97, 314), (71, 720), (997, 720), (1237, 179), (1165, 132), (1011, 278)],
 			"C56": [(661, 149), (316, 219), (203, 89), (46, 127), (89, 720), (1095, 720), (1213, 460)]}
@@ -32,9 +32,10 @@ roi_dict = {"C28": [(246, 176), (337, 713), (1167, 714), (1218, 383), (794, 99)]
 
 def creat_log_dir(cfg):
 	prefix = time.strftime('%Y-%m%d-%H', time.localtime(time.time()))
+	suffix = time.strftime('%Y-%m%d-%H%M%S', time.localtime(time.time())).split('-')[-1]
 	log_dir = Path(cfg.log_dir) / prefix
 	checkfolder(log_dir)
-	log_path = str(log_dir / "track_log.txt")
+	log_path = str(log_dir / f"track_log_{suffix}.txt")
 	logzero.logfile(log_path, maxBytes=1e6, backupCount=3)
 	cfg.log_dir = log_dir
 
@@ -109,24 +110,26 @@ class MOT:
 				if self.cfg.save_img:
 					for i, label in enumerate(labels):
 						img_name = "{}_({}_{}).jpg".format(video_name.split(".")[0], frame_id-(16-index), i)
-						save_img_path = cfg.log_dir / "img" / f"{label_list3.index(label)}-{label}" / img_name
+						save_img_path = cfg.log_dir / camera_num / "img" / f"{label_list3.index(label)}-{label}" / img_name
 						dir_path = save_img_path.parent
 						if not dir_path.exists():
 							dir_path.mkdir(parents=True)
 						cv2.imwrite(str(save_img_path), ims[i])
 
 				# 绘制检测框信息
-				if self.cfg.save_video:
-					for i, (tlbr, label, score) in enumerate(zip(tlbrs_roi, labels, scores)):
-						text = label + " " + score[:4]
-						# text = label+ " " + str(round(score,2))
-						plot_one_box(frames[index], tlbr, text, color=color_dict3[label])
+				with Profiler("ploy bbox"):
+					if self.cfg.save_video:
+						for i, (tlbr, label, score) in enumerate(zip(tlbrs_roi, labels, scores)):
+							text = label + " " + score[:4]
+							# text = label+ " " + str(round(score,2))
+							plot_one_box(frames[index], tlbr, text, color=color_dict3[label])
 			else:
 				print("Frame {} no detections".format(frame_id-(16-index)))
 
-		for each_frame in frames:
-			cv2.polylines(each_frame, np.array([roi_dict[camera_num]], dtype=np.int32), True, thickness=3,
-						  color=(0, 255, 255))  # 绘制多边形
+		with Profiler("ploy lines"):
+			for each_frame in frames:
+				cv2.polylines(each_frame, np.array([roi_dict[camera_num]], dtype=np.int32), True, thickness=3,
+							  color=(0, 255, 255))  # 绘制多边形
 
 		return frames
 
@@ -135,6 +138,8 @@ class MOT:
 		log.debug('=================Timing Stats=================')
 		log.debug(f"{'detect:':<37}{Profiler.get_avg_millis('detect'):>6.3f} ms")
 		log.debug(f"{'mob2staff:':<37}{Profiler.get_avg_millis('mob2staff'):>6.3f} ms")
+		log.debug(f"{'ploy lines:':<37}{Profiler.get_avg_millis('ploy lines'):>6.3f} ms")
+		log.debug(f"{'ploy bbox:':<37}{Profiler.get_avg_millis('ploy bbox'):>6.3f} ms")
 
 
 def demo(cfg, video_path):
@@ -145,8 +150,8 @@ def demo(cfg, video_path):
 		os.mkdir(os.path.dirname(outputFile))
 	width, height = 1280, 720
 	if cfg.save_video:
-		fourcc = cv2.VideoWriter_fourcc(*'MJPG')  ## MJPG MP4V
-		output = cv2.VideoWriter(outputFile, fourcc, 5, (width, height))
+		fourcc = cv2.VideoWriter_fourcc(*'MP4V')  ## MJPG MP4V
+		output = cv2.VideoWriter(outputFile, fourcc, 15, (width, height))
 	fvs = FileVideoStream(video_path).start()
 	mot = MOT(cfg)
 
@@ -169,10 +174,12 @@ def demo(cfg, video_path):
 			frames = mot.step(frames, frame_count, video_name)
 			mot.print_timing_info()
 
-			if cfg.save_video:
-				for frame in frames:
-					frame = cv2.resize(frame, (width, height))
-					output.write(frame)
+			with Profiler("save videos"):
+				if cfg.save_video:
+					for frame in frames:
+						frame = cv2.resize(frame, (width, height))
+						output.write(frame)
+			log.debug(f"{'save videos:':<37}{Profiler.get_avg_millis('save videos'):>6.3f} ms")
 			if cfg.show_predict_video:
 				for frame in frames:
 					cv2.imshow('test', frame)
@@ -204,7 +211,7 @@ def traversal_videos(cfg):
 	for folder in folders:
 		current_folder = os.path.join(cfg.video_path, folder)
 		video_list += glob.glob(os.path.join(current_folder, "*.mp4"))
-	video_list = sorted(video_list)[1:2]
+	video_list = ["/mnt2/sjh/上海银行data/do_demo/C38/C38_1118_1141_1402_000000--001500_000020--000040.mp4"]   #  sorted(video_list)
 	for i, video_path in enumerate(video_list):
 		print(f"{i} / {len(video_list) - 1}")
 		print(f"====> {video_path}")
@@ -222,7 +229,7 @@ def parse_args():
 		"--video_path",
 		# default="/mnt/shy/track/test_yze/cut/guimian_05.mp4"
 		# default="/mnt/shy/农行POC/abc_data/第五批0926/cut_video/C26_2_0923_1000_1020_000000--000200.mp4"
-		default="/mnt2/sjh/上海银行data/do_demo/"
+		default="/mnt1/shy1/上海银行模型验证/第一批badcase/video/"
 
 		# default="/mnt/shy/track/test_yze/guimian.mp4"
 	)
@@ -234,7 +241,7 @@ def parse_args():
 		# default="bank_person_hs"
 	)
 	parser.add_argument(
-		"--skip_frame", default=25, type=int)
+		"--skip_frame", default=15, type=int)
 	# argument = parser.add_argument("--feature_weight", default=0.9, type=float)
 	parser.add_argument(
 		"--log_dir",
